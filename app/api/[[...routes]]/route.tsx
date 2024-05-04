@@ -103,7 +103,7 @@ devtools(app, { serveStatic });
 export const GET = handle(app);
 export const POST = handle(app);
 
-export const Avatar = ({
+const Avatar = ({
   src = "https://nftstorage.link/ipfs/bafybeifbkoma4zfff5locnoxhgwpx2eehezcbctws32qsf3nsexmgtfboy",
   size = "32",
 }) => (
