@@ -8,14 +8,13 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const url = "http://localhost:3000";
+  const url = process.env.VERCEL_URL || "http://localhost:3000";
   const frameMetadata = await getFrameMetadata(`${url}/api`);
   return {
-    title: "FramePG",
-    description:
-      "View and donate to Gitcoin GG20 grant rounds inside of Farcaster frames",
-    metadataBase: new URL("https://framepg.xyz"),
-    openGraph: { images: [FPG_BANNER_URL] },
+    title: "Farhack",
+    description: "Building on Frames",
+    metadataBase: new URL("https://framepg-fawn.vercel.app/"),
+    openGraph: { images: [`${url}/api`] },
     other: frameMetadata,
   };
 }
