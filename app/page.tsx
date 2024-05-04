@@ -1,6 +1,5 @@
 import { Header } from "@/components/header";
 import Rounds from "@/components/rounds";
-import Image from "next/image";
 
 export default function Home() {
   return (
