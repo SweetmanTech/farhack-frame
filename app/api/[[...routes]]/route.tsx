@@ -1,84 +1,121 @@
 /** @jsxImportSource frog/jsx */
 
-import fetchRound from '@/lib/fetchRound'
-import { Button, Frog, TextInput } from 'frog'
-import { devtools } from 'frog/dev'
-// import { neynar } from 'frog/hubs'
-import { handle } from 'frog/next'
-import { serveStatic } from 'frog/serve-static'
+import { Button, Frog } from "frog";
+import { devtools } from "frog/dev";
+import { handle } from "frog/next";
+import { serveStatic } from "frog/serve-static";
+import { getFarcasterUserAddress } from "@coinbase/onchainkit/farcaster";
+import { getProfileInfo } from "@/lib/airstack/getProfileInfo";
+import { Address } from "viem";
+import { getAddressChannels } from "@/lib/airstack/getAddressChannels";
 
 const app = new Frog({
-  assetsPath: '/',
-  basePath: '/api',
-  initialState: { id: 0, projectId: 0 }
-  // Supply a Hub to enable frame verification.
-  // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
-})
+  assetsPath: "/",
+  basePath: "/api",
+});
 
-// Uncomment to use Edge Runtime
-// export const runtime = 'edge'
+app.frame("/", async (c) => {
+  const { frameData } = c;
+  const fid = frameData?.fid || 1;
+  const addresses = await getFarcasterUserAddress(fid);
+  const firstAddress = addresses?.verifiedAddresses?.[0] as Address;
+  const profiles = await getProfileInfo([firstAddress]);
+  const domain = profiles?.data?.Domains?.Domain?.[0];
+  const social = profiles?.data?.Socials?.Social;
+  const farcasterProfile = social.find(
+    (profile: any) => profile.dappName === "farcaster"
+  );
 
-app.frame('/', async(c) => {
-  const { buttonValue, status, deriveState } = c
-  const url = new URL(c.req.url);
-  const id = url.searchParams.get("id");
-
-  const state: any = deriveState((previousState: any) => {
-    if(previousState.id === 0) previousState.id = id ?? 20
-    if(buttonValue === "inc") previousState.projectId++
-    if (buttonValue === 'dec') previousState.projectId--
-  })
-
-  const round = await fetchRound(`${id}`, 42161)
-  //const title = round.data?.rounds[0].applications[0].project.metadata.title || `Project ${state.projectId}`
+  const avatar = domain?.avatar;
+  const name = farcasterProfile?.profileName;
+  const bio = farcasterProfile?.profileBio;
+  const channelResponse = await getAddressChannels(firstAddress);
+  const channels =
+    channelResponse?.data?.FarcasterChannelParticipants
+      ?.FarcasterChannelParticipant;
+  const shuffledChannels = channels.sort(() => 0.5 - Math.random());
+  const randomChannelNames = shuffledChannels
+    .slice(0, 3)
+    .map((channel: any) => `/${channel.channelName}`)
+    .join(" ");
 
   return c.res({
     image: (
       <div
         style={{
-          alignItems: 'center',
-          background:
-            status === 'response'
-              ? 'linear-gradient(to right, #432889, #17101F)'
-              : 'black',
-          backgroundSize: '100% 100%',
-          display: 'flex',
-          flexDirection: 'column',
-          flexWrap: 'nowrap',
-          height: '100%',
-          justifyContent: 'center',
-          textAlign: 'center',
-          width: '100%',
+          alignItems: "center",
+          background: "black",
+          backgroundSize: "100% 100%",
+          display: "flex",
+          flexDirection: "column",
+          flexWrap: "nowrap",
+          height: "100%",
+          justifyContent: "center",
+          textAlign: "center",
+          width: "100%",
         }}
       >
         <div
           style={{
-            color: 'white',
+            display: "flex",
+            flexDirection: "column",
+            color: "white",
             fontSize: 60,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
+            alignItems: "center",
+            fontStyle: "normal",
+            letterSpacing: "-0.025em",
             lineHeight: 1.4,
             marginTop: 30,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
+            padding: "0 120px",
+            whiteSpace: "pre-wrap",
           }}
         >
-          {state.projectId === 0 ? `View projects in ${round.data?.rounds[0].roundMetadata.name}` : `Project ${state.projectId}`}
+          <div
+            style={{
+              display: "flex",
+              color: "white",
+              gap: 10,
+              fontSize: 60,
+              alignItems: "center",
+              width: "100vw",
+            }}
+          >
+            <Avatar src={avatar} size={"100"} />
+            {name}
+          </div>
+
+          <p>{bio}</p>
+          <p>{randomChannelNames}</p>
         </div>
       </div>
     ),
-    intents: state.projectId === 0 ? [
-      <Button.Redirect location={`https://explorer.gitcoin.co/#/round/42161/${id || state.id}`}>View Round</Button.Redirect>,
-      <Button value="inc">View Projects</Button>,
-    ] : [
-      <Button.Redirect location={`https://explorer.gitcoin.co/#/round/42161/${id || state.id}/${state.projectId}`}>Donate to Project</Button.Redirect>,
-      <Button value="inc">Next</Button>,
-      <Button value="dec">Back</Button>
-    ]
-  })
-})
+    intents: [
+      <Button.Redirect location={`https://warpcast.com/${name}`}>
+        Follow
+      </Button.Redirect>,
+      <Button>Next</Button>,
+    ],
+  });
+});
 
-devtools(app, { serveStatic })
+devtools(app, { serveStatic });
 
-export const GET = handle(app)
-export const POST = handle(app)
+export const GET = handle(app);
+export const POST = handle(app);
+
+export const Avatar = ({
+  src = "https://nftstorage.link/ipfs/bafybeifbkoma4zfff5locnoxhgwpx2eehezcbctws32qsf3nsexmgtfboy",
+  size = "32",
+}) => (
+  <img
+    alt="Avatar"
+    height={size}
+    width={size}
+    src={src}
+    style={{
+      aspectRatio: "32/32",
+      objectFit: "cover",
+      borderRadius: "50%",
+    }}
+  />
+);
