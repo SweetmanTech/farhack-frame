@@ -23,10 +23,7 @@ app.frame("/", async (c) => {
 
 app.frame("/fid/:fid", async (c) => {
   const fid = parseInt(c.req.param("fid"), 10);
-  console.log("SWEETS fid", fid);
-
   const { avatar, name, bio, randomChannelNames } = await getFidParams(fid);
-  console.log("SWEETS ", avatar, name, bio, randomChannelNames);
   return c.res(getMemberFrame(avatar, fid, name, bio, randomChannelNames));
 });
 
