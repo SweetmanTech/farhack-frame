@@ -34,7 +34,6 @@ app.frame("/fid/:fid", async (c) => {
     channelMemberResponse.data.FarcasterChannelParticipants
       .FarcasterChannelParticipant;
   const nextMember = participants[0];
-  console.log("SWEETS channelMemberResponse", nextMember);
   const nextFid = nextMember.participantId;
   return c.res(
     getMemberFrame(avatar, fid, name, bio, randomChannelNames, nextFid)
@@ -102,9 +101,7 @@ const getMemberFrame = (
   randomChannelNames: string,
   nextFid: number = fid + 1
 ) => {
-  console.log("SWEETS nextFid", nextFid);
   const postPath = `/fid/${nextFid}`;
-  console.log("SWEETS postPath", postPath);
 
   return {
     action: postPath,
