@@ -17,6 +17,39 @@ const app = new Frog({
 app.frame("/", async (c) => {
   const { frameData } = c;
   const fid = frameData?.fid || 2;
+  const { avatar, name, bio, randomChannelNames } = await getFidParams(fid);
+  return c.res(getMemberFrame(avatar, fid, name, bio, randomChannelNames));
+});
+
+app.frame("/fid/:fid", async (c) => {
+  const fid = parseInt(c.req.param("fid"), 10);
+  const { avatar, name, bio, randomChannelNames } = await getFidParams(fid);
+  return c.res(getMemberFrame(avatar, fid, name, bio, randomChannelNames));
+});
+
+devtools(app, { serveStatic });
+
+export const GET = handle(app);
+export const POST = handle(app);
+
+const Avatar = ({
+  src = "https://cloudflare-ipfs.com/ipfs/bafybeifbkoma4zfff5locnoxhgwpx2eehezcbctws32qsf3nsexmgtfboy",
+  size = "32",
+}) => (
+  <img
+    alt="Avatar"
+    height={size}
+    width={size}
+    src={src}
+    style={{
+      aspectRatio: "32/32",
+      objectFit: "cover",
+      borderRadius: "50%",
+    }}
+  />
+);
+
+const getFidParams = async (fid: number) => {
   const addresses = await getFarcasterUserAddress(fid);
   const firstAddress = addresses?.verifiedAddresses?.[0] as Address;
   const profiles = await getProfileInfo([firstAddress]);
@@ -25,7 +58,6 @@ app.frame("/", async (c) => {
   const farcasterProfile = social?.find?.(
     (profile: any) => profile.dappName === "farcaster"
   );
-
   const avatar = domain?.avatar;
   const name = farcasterProfile?.profileName;
   const bio = farcasterProfile?.profileBio;
@@ -39,8 +71,17 @@ app.frame("/", async (c) => {
     .slice(0, 3)
     .map((channel: any) => `/${channel.channelName}`)
     .join(" ");
+  return { avatar, name, bio, randomChannelNames };
+};
 
-  return c.res({
+const getMemberFrame = (
+  avatar: string,
+  fid: number,
+  name: string,
+  bio: string,
+  randomChannelNames: string
+) => {
+  return {
     image: (
       <div
         style={{
@@ -83,6 +124,7 @@ app.frame("/", async (c) => {
           >
             <Avatar src={avatar} size={"100"} />
             {name}
+            fid: {fid}
           </div>
 
           <p style={{ fontSize: 25 }}>{bio}</p>
@@ -96,27 +138,5 @@ app.frame("/", async (c) => {
       </Button.Redirect>,
       <Button>Next</Button>,
     ],
-  });
-});
-
-devtools(app, { serveStatic });
-
-export const GET = handle(app);
-export const POST = handle(app);
-
-const Avatar = ({
-  src = "https://nftstorage.link/ipfs/bafybeifbkoma4zfff5locnoxhgwpx2eehezcbctws32qsf3nsexmgtfboy",
-  size = "32",
-}) => (
-  <img
-    alt="Avatar"
-    height={size}
-    width={size}
-    src={src}
-    style={{
-      aspectRatio: "32/32",
-      objectFit: "cover",
-      borderRadius: "50%",
-    }}
-  />
-);
+  };
+};
