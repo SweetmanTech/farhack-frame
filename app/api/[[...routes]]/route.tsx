@@ -33,7 +33,7 @@ export const GET = handle(app);
 export const POST = handle(app);
 
 const Avatar = ({
-  src = "https://nftstorage.link/ipfs/bafybeifbkoma4zfff5locnoxhgwpx2eehezcbctws32qsf3nsexmgtfboy",
+  src = "https://cloudflare-ipfs.com/ipfs/bafybeifbkoma4zfff5locnoxhgwpx2eehezcbctws32qsf3nsexmgtfboy",
   size = "32",
 }) => (
   <img
