@@ -16,13 +16,13 @@ const app = new Frog({
 
 app.frame("/", async (c) => {
   const { frameData } = c;
-  const fid = frameData?.fid || 1;
+  const fid = frameData?.fid || 2;
   const addresses = await getFarcasterUserAddress(fid);
   const firstAddress = addresses?.verifiedAddresses?.[0] as Address;
   const profiles = await getProfileInfo([firstAddress]);
   const domain = profiles?.data?.Domains?.Domain?.[0];
   const social = profiles?.data?.Socials?.Social;
-  const farcasterProfile = social.find(
+  const farcasterProfile = social?.find?.(
     (profile: any) => profile.dappName === "farcaster"
   );
 
@@ -33,7 +33,8 @@ app.frame("/", async (c) => {
   const channels =
     channelResponse?.data?.FarcasterChannelParticipants
       ?.FarcasterChannelParticipant;
-  const shuffledChannels = channels.sort(() => 0.5 - Math.random());
+
+  const shuffledChannels = channels?.sort?.(() => 0.5 - Math.random()) || [];
   const randomChannelNames = shuffledChannels
     .slice(0, 3)
     .map((channel: any) => `/${channel.channelName}`)
@@ -84,7 +85,7 @@ app.frame("/", async (c) => {
             {name}
           </div>
 
-          <p>{bio}</p>
+          <p style={{ fontSize: 25 }}>{bio}</p>
           <p>{randomChannelNames}</p>
         </div>
       </div>
