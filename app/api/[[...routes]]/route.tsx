@@ -8,6 +8,8 @@ import { getFarcasterUserAddress } from "@coinbase/onchainkit/farcaster";
 import { getProfileInfo } from "@/lib/airstack/getProfileInfo";
 import { Address } from "viem";
 import { getAddressChannels } from "@/lib/airstack/getAddressChannels";
+import { VERCEL_URL } from "@/lib/consts";
+import { getChannelMembers } from "@/lib/airstack/getChannelMembers";
 
 const app = new Frog({
   assetsPath: "/",
@@ -23,8 +25,20 @@ app.frame("/", async (c) => {
 
 app.frame("/fid/:fid", async (c) => {
   const fid = parseInt(c.req.param("fid"), 10);
-  const { avatar, name, bio, randomChannelNames } = await getFidParams(fid);
-  return c.res(getMemberFrame(avatar, fid, name, bio, randomChannelNames));
+  const { avatar, name, bio, randomChannelNames, nextChannel } =
+    await getFidParams(fid);
+  const channelMemberResponse = await getChannelMembers(
+    nextChannel?.channelId || "sonata"
+  );
+  const participants =
+    channelMemberResponse.data.FarcasterChannelParticipants
+      .FarcasterChannelParticipant;
+  const nextMember = participants[0];
+  console.log("SWEETS channelMemberResponse", nextMember);
+  const nextFid = nextMember.participantId;
+  return c.res(
+    getMemberFrame(avatar, fid, name, bio, randomChannelNames, nextFid)
+  );
 });
 
 devtools(app, { serveStatic });
@@ -71,7 +85,13 @@ const getFidParams = async (fid: number) => {
     .slice(0, 3)
     .map((channel: any) => `/${channel.channelName}`)
     .join(" ");
-  return { avatar, name, bio, randomChannelNames };
+  return {
+    avatar,
+    name,
+    bio,
+    randomChannelNames,
+    nextChannel: shuffledChannels[0],
+  };
 };
 
 const getMemberFrame = (
@@ -79,9 +99,15 @@ const getMemberFrame = (
   fid: number,
   name: string,
   bio: string,
-  randomChannelNames: string
+  randomChannelNames: string,
+  nextFid: number = fid + 1
 ) => {
+  console.log("SWEETS nextFid", nextFid);
+  const postPath = `/fid/${nextFid}`;
+  console.log("SWEETS postPath", postPath);
+
   return {
+    action: postPath,
     image: (
       <div
         style={{
@@ -115,6 +141,7 @@ const getMemberFrame = (
           <div
             style={{
               display: "flex",
+              justifyContent: "space-around",
               color: "white",
               gap: 10,
               fontSize: 60,
@@ -123,7 +150,7 @@ const getMemberFrame = (
             }}
           >
             <Avatar src={avatar} size={"100"} />
-            {name}
+            <div>{name}</div>
             fid: {fid}
           </div>
 
